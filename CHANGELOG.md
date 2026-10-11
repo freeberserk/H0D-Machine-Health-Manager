@@ -1,3 +1,9 @@
+## 0.3.1 — Seuil critique de destruction
+- Lorsqu'un coup met une pièce détachable à 0 PV, dégâts du coup >= 200 % de ses PV max : Detruit ; sinon Detache.
+- L'issue est conservée sur l'Item ; la neutralisation fonctionnelle reste immédiate à 0 PV.
+- L'overkill sur la seule pièce adjacente conserve la règle 50 %, sans cascade ; son propre seuil critique est évalué sur les dégâts reportés.
+- Une correction manuelle des PV à 0 conserve un état Detache pour une pièce détachable, sans simuler un coup critique.
+
 # Changelog
 
 ## 0.3.0
