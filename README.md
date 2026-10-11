@@ -1,17 +1,58 @@
-# H0D Machine Health Manager v0.1.0
+# H0D Machine Health Manager v0.3.0
 
-Console MJ de combat pour Foundry VTT v14 + Custom System Builder.
+Console MJ Foundry VTT v14 pour la mécanique d’Intégrité des machines H0D.
 
-- Sélectionner exactement un token machine.
-- Lancer la macro `H0D — État machine`.
-- Corps : -10/-5/-1, saisie directe, +1, MAX.
-- Pièces : -5/-1, saisie directe, +1, MAX, état, marquage.
-- 0 PV passe automatiquement la pièce à `Detruit`.
-- Les états utilisent les clés canoniques du template Pièce Machine v2.4 : `Intact`, `Endommage`, `Detruit`, `Detache`.
-- Les PV des pièces modifient directement `H0D_Composant_PV_Actuels`.
-- Le template Machine actuel n'a pas de champ « PV corps actuels » distinct : le module conserve donc les PV actuels du corps dans un flag dédié, initialisé depuis `H0D_Machine_PV_Corps_Base`, afin de ne pas mélanger corps et somme corps+pièces.
+## Règles automatisées
+- **Intégrité** = vraie jauge de survie.
+- **Corps protégé** : dégâts directs divisés par 2, arrondis à l’inférieur.
+- **Corps exposé** : dégâts directs normaux.
+- Une pièce ciblée absorbe les dégâts jusqu’à 0 PV.
+- Si elle est détruite avec de l’overkill : 50 % de l’excédent, arrondi à l’inférieur, est reporté sur **une seule** pièce active de la même zone anatomique.
+- Le report ne rebondit jamais une seconde fois.
+- S’il n’existe aucune pièce adjacente valide, le report est perdu.
+- Si la pièce adjacente n’absorbe pas tout le report, le surplus est perdu.
+- Les dégâts réellement absorbés par les pièces comptant dans l’Intégrité réduisent la jauge globale.
 
-Macro : `game.h0dMachineHealth.open();`
+## Interface
+Sélectionner exactement un token Machine puis lancer la macro `H0D — État machine`.
 
-Repo : https://github.com/freeberserk/h0d-machine-health-manager
-Manifest : https://github.com/freeberserk/h0d-machine-health-manager/releases/latest/download/module.json
+Boutons `−5`, `−1` et `DGT` appliquent de vrais dégâts et utilisent automatiquement l’overkill. `PV`, `+1`, `MAX` restent des outils MJ de correction/réparation.
+
+Le module reste tolérant avec les anciennes machines : si `Zone anatomique` / `Protège le corps` manquent encore, il les déduit temporairement du nom, de l’emplacement, du type et du bonus de DEF.
+
+- Une pièce déjà détruite/détachée ne peut pas servir de point de départ à un report ; ses boutons de dégâts sont désactivés.
+
+
+## Intégrité v2 — règle figée
+
+- Corps protégé : dégâts directs / 2, arrondi inférieur.
+- Corps exposé : dégâts directs normaux.
+- Une pièce absorbe au maximum ses PV restants.
+- 50 % de l'overkill, arrondi inférieur, est reporté sur UNE pièce active de la même zone.
+- Aucun second rebond.
+- Sans pièce adjacente valide, le report est perdu.
+- Seuls les dégâts réellement absorbés par des pièces qui comptent dans l'Intégrité diminuent cette jauge.
+- Les modifications directes des PV/états depuis la fiche de pièce synchronisent aussi l'Intégrité.
+
+
+## Correctif 0.2.2
+
+La 0.2.1 contenait une régression de build : les fonctions `applyBodyDamage` et
+`applyPieceDamage` étaient référencées dans l'API publiée au `ready`, mais absentes
+du script final. Foundry marquait le module actif, mais l'API ne pouvait jamais être publiée.
+
+La 0.2.2 restaure ces fonctions sans modifier les règles Intégrité v2.
+
+
+## Interface Combat — v0.3.0
+
+La fenêtre principale est désormais conçue pour le combat :
+1. cliquer sur **Corps** ou sur une **pièce** ;
+2. saisir les dégâts ;
+3. cliquer **APPLIQUER** (ou appuyer sur Entrée).
+
+Le module calcule automatiquement la réduction du corps, la destruction de pièce, l'overkill,
+la pièce adjacente de même zone, la perte du report et l'Intégrité.
+
+Le bouton **Marquer / Démarquer** reste visible sur chaque pièce. Les outils moins fréquents
+(PV manuels, réparation, état) sont rangés derrière `…` afin de garder l'interface lisible.

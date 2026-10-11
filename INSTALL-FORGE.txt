@@ -1,0 +1,9 @@
+H0D Machine Health Manager v0.2.0
+
+1. Installer/mettre à jour H0D Template Manager v0.4.0.
+2. Installer/mettre à jour H0D Machine Builder v0.7.0.
+3. Installer ce module.
+4. Recharger le monde.
+5. Sélectionner un token Machine et lancer `H0D — État machine`.
+
+Ordre recommandé avant une partie : Template Manager -> installer/mettre à jour les templates -> Builder -> mettre à jour les machines utilisées -> Health Manager.

@@ -1,0 +1,41 @@
+{
+  "id": "h0d-machine-health-manager",
+  "title": "H0D Machine Health Manager",
+  "description": "Console MJ Intégrité H0D — interface combat simplifiée et visuelle, ciblage direct, corps protégé/exposé et overkill automatique.",
+  "version": "0.3.0",
+  "authors": [
+    {
+      "name": "freeberserk"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "esmodules": [
+    "scripts/h0d-machine-health-manager.js"
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "custom-system-builder",
+        "type": "system",
+        "compatibility": {
+          "minimum": "6.0.2"
+        }
+      }
+    ],
+    "requires": [
+      {
+        "id": "h0d-template-manager",
+        "type": "module",
+        "compatibility": {
+          "minimum": "1.3.0"
+        }
+      }
+    ]
+  },
+  "url": "https://github.com/freeberserk/h0d-machine-health-manager",
+  "manifest": "https://github.com/freeberserk/h0d-machine-health-manager/releases/latest/download/module.json",
+  "download": "https://github.com/freeberserk/h0d-machine-health-manager/releases/latest/download/h0d-machine-health-manager.zip"
+}
