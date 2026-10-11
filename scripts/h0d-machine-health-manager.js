@@ -1,6 +1,6 @@
 const MODULE_ID="h0d-machine-health-manager";
 const TITLE="H0D Machine Health Manager";
-const VERSION="0.3.0";
+const VERSION="0.3.1";
 const MACRO_NAME="H0D — État machine";
 const MACRO_COMMAND=`if (!game.h0dMachineHealth?.open) {
   ui.notifications.error("H0D Machine Health Manager : module non chargé ou API indisponible.");
@@ -142,7 +142,7 @@ async function updatePieceAndIntegrity(item,update,{syncIntegrity=true}={}){
 async function updatePieceCurrent(item,next,manual=true){
   const hp=pieceHP(item), before=hp.current, value=clamp(next,0,hp.max), oldState=state(item);
   const update={"system.props.H0D_Composant_PV_Actuels":value};
-  if(value<=0 && oldState!=="Detache") update["system.props.H0D_Composant_Etat"]="Detruit";
+  if(value<=0 && oldState!=="Detache") update["system.props.H0D_Composant_Etat"]=bool(props(item).H0D_Composant_Detachable)?"Detache":"Detruit";
   else if(value>=hp.max && oldState!=="Detache") update["system.props.H0D_Composant_Etat"]="Intact";
   else if(value>0 && value<hp.max && oldState!=="Detache") update["system.props.H0D_Composant_Etat"]="Endommage";
   await updatePieceAndIntegrity(item,update,{syncIntegrity:manual});
@@ -181,6 +181,12 @@ async function applyPieceDamage(actor,target,incoming){
   // Ici on NE synchronise PAS l'intégrité pièce par pièce :
   // on calcule l'attaque complète puis on retire une seule fois la perte réelle.
   await updatePieceCurrent(target,targetHP.current-targetAbsorbed,false);
+  // Le seuil critique compare les dégâts du coup aux 200 % des PV MAX.
+  // Une pièce détachable neutralisée se détache, sauf destruction critique.
+  const targetOutcome = targetAbsorbed >= targetHP.current
+    ? (incoming >= 2 * targetHP.max || !bool(props(target).H0D_Composant_Detachable) ? "Detruit" : "Detache")
+    : null;
+  if(targetOutcome) await target.update({"system.props.H0D_Composant_Etat":targetOutcome},{h0dMachineHealthSkipSync:true});
 
   let integrityLoss=countsIntegrity(target)?targetAbsorbed:0;
 
@@ -199,6 +205,10 @@ async function applyPieceDamage(actor,target,incoming){
 
       // Aucun second rebond : tout surplus sur la pièce adjacente est perdu.
       await updatePieceCurrent(adjacent,adjacentHP.current-adjacentAbsorbed,false);
+      if(adjacentAbsorbed >= adjacentHP.current){
+        const outcome = reportRequested >= 2 * adjacentHP.max || !bool(props(adjacent).H0D_Composant_Detachable) ? "Detruit" : "Detache";
+        await adjacent.update({"system.props.H0D_Composant_Etat":outcome},{h0dMachineHealthSkipSync:true});
+      }
 
       if(countsIntegrity(adjacent)){
         integrityLoss+=adjacentAbsorbed;
@@ -214,6 +224,7 @@ async function applyPieceDamage(actor,target,incoming){
     incoming,
     target,
     targetAbsorbed,
+    targetOutcome,
     overkill,
     reportRequested,
     adjacent,
@@ -413,7 +424,7 @@ async function askState(item){
 function damageSummary(r){
   if(r.target){
     const report=r.adjacent?` · report ${r.adjacentAbsorbed}/${r.reportRequested} → ${r.adjacent.name}${r.reportLost>0?` · ${r.reportLost} perdu`:``}`:(r.reportRequested>0?' · report perdu (aucune pièce adjacente)':'');
-    return `${r.incoming} dégâts → ${r.target.name} : ${r.targetAbsorbed} absorbés${report} · Intégrité −${r.integrityLoss}`;
+    return `${r.incoming} dégâts → ${r.target.name} : ${r.targetAbsorbed} absorbés${r.targetOutcome?` · ${r.targetOutcome==="Detache"?"détachée":"détruite"}`:""}${report} · Intégrité −${r.integrityLoss}`;
   }
   return `${r.incoming} dégâts corps → ${r.protectedBody?`÷2 = ${r.effective}`:`${r.effective}`} · Intégrité −${r.absorbed}`;
 }
