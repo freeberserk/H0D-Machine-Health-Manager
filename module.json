@@ -2,7 +2,7 @@
   "id": "h0d-machine-health-manager",
   "title": "H0D Machine Health Manager",
   "description": "Console MJ Intégrité H0D — interface combat simplifiée et visuelle, ciblage direct, corps protégé/exposé et overkill automatique.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "authors": [
     {
       "name": "freeberserk"
