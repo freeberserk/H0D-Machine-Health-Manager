@@ -1,3 +1,11 @@
+## 0.3.2 — Synchronisation PV ↔ état des pièces
+- Les modifications directes de PV sur une pièce mettent maintenant aussi à jour son état stocké.
+- PV max → `Intact` ; PV partiels → `Endommage` ; 0 PV → `Detache` si la pièce est détachable, sinon `Detruit`.
+- Une pièce déjà `Detache` reste détachée si ses PV sont corrigés : elle peut donc conserver des PV et rester exploitable pour le craft.
+- Une modification manuelle explicite de l'état garde aussi les PV cohérents : `Detruit` force 0 PV, `Intact` restaure au max, `Endommage` évite 0/max lorsque c'est possible.
+- La synchronisation de l'Intégrité est calculée une seule fois sur l'état final, sans double comptage.
+- Les règles de combat 0.3.1 restent inchangées : seuil critique 200 %, détachement normal, overkill 50 % sans cascade.
+
 ## 0.3.1 — Seuil critique de destruction
 - Lorsqu'un coup met une pièce détachable à 0 PV, dégâts du coup >= 200 % de ses PV max : Detruit ; sinon Detache.
 - L'issue est conservée sur l'Item ; la neutralisation fonctionnelle reste immédiate à 0 PV.
