@@ -1,4 +1,4 @@
-# H0D Machine Health Manager v0.3.0
+# H0D Machine Health Manager v0.3.2
 
 Console MJ Foundry VTT v14 pour la mécanique d’Intégrité des machines H0D.
 
@@ -56,3 +56,16 @@ la pièce adjacente de même zone, la perte du report et l'Intégrité.
 
 Le bouton **Marquer / Démarquer** reste visible sur chaque pièce. Les outils moins fréquents
 (PV manuels, réparation, état) sont rangés derrière `…` afin de garder l'interface lisible.
+
+
+## v0.3.2 — PV et état restent cohérents
+
+Le Health Manager est l'autorité de la phase **PV → état** de la chaîne des pièces.
+
+- une pièce à son maximum est **Intacte** ;
+- entre 1 et max−1 PV, elle est **Endommagée** ;
+- une pièce détachable amenée à 0 PV est **Détachée**, sauf destruction critique pendant un coup ;
+- une pièce non détachable à 0 PV est **Détruite** ;
+- une pièce explicitement détachée peut conserver des PV > 0.
+
+Les corrections faites directement depuis la fiche CSB sont désormais normalisées selon les mêmes règles, puis l'Intégrité est recalculée une seule fois.
