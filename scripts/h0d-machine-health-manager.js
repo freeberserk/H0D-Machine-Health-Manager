@@ -1,6 +1,6 @@
 const MODULE_ID="h0d-machine-health-manager";
 const TITLE="H0D Machine Health Manager";
-const VERSION="0.3.1";
+const VERSION="0.3.2";
 const MACRO_NAME="H0D — État machine";
 const MACRO_COMMAND=`if (!game.h0dMachineHealth?.open) {
   ui.notifications.error("H0D Machine Health Manager : module non chargé ou API indisponible.");
@@ -239,9 +239,15 @@ async function applyPieceDamage(actor,target,incoming){
 async function setState(item,key){
   const hp=pieceHP(item);
   let next=hp.current;
+
+  // État manuel = couple PV/état cohérent.
   if(key==="Detruit") next=0;
-  if(key==="Intact" && next<=0) next=hp.max;
-  if(key==="Endommage" && (next<=0 || next>=hp.max)) next=Math.max(1,hp.max-1);
+  else if(key==="Intact") next=hp.max;
+  else if(key==="Endommage"){
+    if(hp.max<=1) next=hp.max;
+    else next=clamp(next,1,hp.max-1);
+  }
+  // Detache conserve les PV courants : une pièce peut être arrachée encore exploitable.
 
   const update={"system.props.H0D_Composant_Etat":key};
   if(next!==hp.current) update["system.props.H0D_Composant_PV_Actuels"]=next;
@@ -554,6 +560,12 @@ async function ensureMacro(){
 
 
 const externalPieceSync=new Map();
+
+function changeHas(changes,key){
+  if(Object.prototype.hasOwnProperty.call(changes,key)) return true;
+  return foundry.utils.getProperty(changes,key)!==undefined;
+}
+
 function relevantPieceUpdate(changes){
   const keys=[
     "system.props.H0D_Composant_PV_Actuels",
@@ -561,29 +573,76 @@ function relevantPieceUpdate(changes){
     "system.props.H0D_Composant_Compte_PV",
     "system.props.H0D_Composant_PV_Max"
   ];
-  return keys.some(k=>{
-    if(Object.prototype.hasOwnProperty.call(changes,k)) return true;
-    return foundry.utils.getProperty(changes,k)!==undefined;
-  });
+  return keys.some(k=>changeHas(changes,k));
 }
+
 function isMachinePiece(item){
   if(item?.parent?.documentName!=="Actor") return false;
   const p=props(item);
   return ("H0D_Composant_PV_Actuels" in p && "H0D_Composant_PV_Max" in p) ||
     item.getFlag("h0d-machine-builder","kind")==="piece";
 }
+
+function normalizedExternalPieceUpdate(item,changes,pending){
+  const hp=pieceHP(item);
+  const p=props(item);
+  const stateChanged=changeHas(changes,"system.props.H0D_Composant_Etat");
+  const hpChanged=changeHas(changes,"system.props.H0D_Composant_PV_Actuels");
+  const stored=String(p.H0D_Composant_Etat||"Intact");
+  const update={};
+
+  if(stateChanged){
+    // Une édition explicite de l'état impose un couple cohérent.
+    if(stored==="Detruit" && hp.current!==0){
+      update["system.props.H0D_Composant_PV_Actuels"]=0;
+    } else if(stored==="Intact" && hp.current!==hp.max){
+      update["system.props.H0D_Composant_PV_Actuels"]=hp.max;
+    } else if(stored==="Endommage" && hp.max>1 && (hp.current<=0 || hp.current>=hp.max)){
+      update["system.props.H0D_Composant_PV_Actuels"]=Math.max(1,hp.max-1);
+    }
+    // Detache conserve volontairement ses PV : utile pour le craft/loot.
+    return update;
+  }
+
+  if(hpChanged){
+    // Une édition directe des PV fait évoluer automatiquement l'état.
+    // Une pièce déjà détachée reste détachée même si ses PV sont corrigés.
+    let desired;
+    if(pending?.stateBefore==="Detache") desired="Detache";
+    else if(hp.current<=0) desired=bool(p.H0D_Composant_Detachable)?"Detache":"Detruit";
+    else if(hp.current>=hp.max) desired="Intact";
+    else desired="Endommage";
+
+    if(desired!==stored) update["system.props.H0D_Composant_Etat"]=desired;
+  }
+
+  return update;
+}
+
 Hooks.on("preUpdateItem",(item,changes,options,userId)=>{
   if(options?.h0dMachineHealthSkipSync || !game.user?.isGM || (userId && userId!==game.user.id)) return;
   if(!isMachinePiece(item) || !relevantPieceUpdate(changes)) return;
-  externalPieceSync.set(item.uuid,{before:pieceContribution(item),maxBefore:integrityMax(item.parent)});
+  externalPieceSync.set(item.uuid,{
+    before:pieceContribution(item),
+    maxBefore:integrityMax(item.parent),
+    stateBefore:String(props(item).H0D_Composant_Etat||"Intact")
+  });
 });
+
 Hooks.on("updateItem",async(item,changes,options,userId)=>{
   if(options?.h0dMachineHealthSkipSync || !game.user?.isGM || (userId && userId!==game.user.id)) return;
   const pending=externalPieceSync.get(item.uuid);
   if(!pending || !isMachinePiece(item)) return;
   externalPieceSync.delete(item.uuid);
+
   try{
     const actor=item.parent;
+
+    const normalized=normalizedExternalPieceUpdate(item,changes,pending);
+    if(Object.keys(normalized).length){
+      await item.update(normalized,{h0dMachineHealthSkipSync:true});
+    }
+
     const after=pieceContribution(item);
     const delta=after-pending.before;
     if(delta) await changeIntegrity(actor,delta);
