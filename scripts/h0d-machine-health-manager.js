@@ -1,6 +1,6 @@
 const MODULE_ID="h0d-machine-health-manager";
 const TITLE="H0D Machine Health Manager";
-const VERSION="0.3.2";
+const VERSION="0.3.3";
 const MACRO_NAME="H0D — État machine";
 const MACRO_COMMAND=`if (!game.h0dMachineHealth?.open) {
   ui.notifications.error("H0D Machine Health Manager : module non chargé ou API indisponible.");
@@ -534,6 +534,40 @@ function bindControls(dialog,actor){
   }
 }
 
+function resetDialogScroll(dialog){
+  const run=()=>{
+    const root=dialog?.element;
+    if(!root) return;
+
+    // Foundry v14 peut donner le focus au premier champ du DialogV2 après le rendu,
+    // ce qui fait défiler automatiquement la fenêtre jusqu'au champ Dégâts.
+    const active=document.activeElement;
+    if(active && root.contains(active) && active.matches?.("[data-hm-damage]")) active.blur();
+
+    const scrollers=[
+      root.querySelector(".window-content"),
+      root.querySelector(".dialog-content"),
+      root.querySelector(".standard-form"),
+      root.querySelector(".hm-shell"),
+      root
+    ].filter(Boolean);
+
+    for(const node of scrollers){
+      try{
+        node.scrollTop=0;
+        node.scrollLeft=0;
+      }catch(_){}
+    }
+  };
+
+  // Le focus automatique de DialogV2 peut arriver après le premier paint.
+  // On recadre donc immédiatement puis sur deux frames, avec un dernier filet
+  // de sécurité très court après la fin du rendu.
+  run();
+  requestAnimationFrame(()=>{ run(); requestAnimationFrame(run); });
+  setTimeout(run,60);
+}
+
 async function open(){
   try{
     if(!game.user?.isGM){ notice("warn","Cette console est prévue pour le MJ."); return; }
@@ -541,7 +575,10 @@ async function open(){
     const DialogV2=foundry.applications.api.DialogV2;
     const dialog=new DialogV2({window:{title:`H0D — État machine · ${actor.name}`,resizable:true},position:{width:900},content:makeContent(actor,{targetId:"body",damage:1}),buttons:[{action:"close",label:"Fermer",icon:"fas fa-xmark"}]});
     dialog._h0dUi={targetId:"body",damage:1};
-    await dialog.render(true); bindControls(dialog,actor); return dialog;
+    await dialog.render(true);
+    bindControls(dialog,actor);
+    resetDialogScroll(dialog);
+    return dialog;
   }catch(err){ console.error(`${MODULE_ID} | ouverture`,err); notice("error",`Ouverture impossible : ${err?.message??err}`); }
 }
 

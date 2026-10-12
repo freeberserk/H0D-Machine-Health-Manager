@@ -1,3 +1,9 @@
+## 0.3.3 — Correction d'affichage à l'ouverture
+- Corrige le défilement automatique de DialogV2 qui pouvait ouvrir la console directement sur le champ **Dégâts**.
+- La fenêtre est maintenant recadrée en haut après le rendu afin que le portrait, le statut du corps et le compteur **Intégrité actuel / max** restent visibles.
+- Le champ Dégâts perd le focus initial s'il est automatiquement sélectionné par Foundry.
+- Aucun changement de mécanique, de PV, d'état ou d'Intégrité.
+
 ## 0.3.2 — Synchronisation PV ↔ état des pièces
 - Les modifications directes de PV sur une pièce mettent maintenant aussi à jour son état stocké.
 - PV max → `Intact` ; PV partiels → `Endommage` ; 0 PV → `Detache` si la pièce est détachable, sinon `Detruit`.
