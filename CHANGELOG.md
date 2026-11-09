@@ -1,3 +1,11 @@
+## 0.3.4 — Macro d'état machine sans écrasement des personnalisations
+- Protéger « H0D — État machine » : le nom seul n'autorise plus la réécriture de son contenu.
+- Marquer les macros officielles avec le module propriétaire et leur dernière commande générée.
+- Les macros anciennes au contenu exactement canonique sont adoptées sans réécriture ; les personnalisations préexistantes restent intactes.
+- En cas de conflit de nom, créer un lanceur officiel distinct plutôt qu'écraser la macro utilisateur.
+- Tests automatisés de création, adoption, collision, commandes modifiées et redémarrages.
+- Aucune modification des règles d'Intégrité ; validation Foundry v14 encore nécessaire.
+
 ## 0.3.3 — Correction d'affichage à l'ouverture
 - Corrige le défilement automatique de DialogV2 qui pouvait ouvrir la console directement sur le champ **Dégâts**.
 - La fenêtre est maintenant recadrée en haut après le rendu afin que le portrait, le statut du corps et le compteur **Intégrité actuel / max** restent visibles.
