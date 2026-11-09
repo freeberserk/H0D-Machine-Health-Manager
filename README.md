@@ -1,4 +1,6 @@
-# H0D Machine Health Manager v0.3.3
+# H0D Machine Health Manager v0.3.4
+
+Macro de lancement sécurisée : le module marque ses propres macros et conserve les commandes personnalisées, y compris lorsqu'elles portent son ancien nom. Si nécessaire, un nouveau lanceur « (module officiel) » est créé séparément. Seules les macros marquées, et encore identiques à leur dernier code généré, peuvent être modifiées automatiquement.
 
 Console MJ Foundry VTT v14 pour la mécanique d’Intégrité des machines H0D.
 
