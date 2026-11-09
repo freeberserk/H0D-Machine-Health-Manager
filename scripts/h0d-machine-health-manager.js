@@ -1,6 +1,7 @@
+import {ensureManagedLauncherMacro} from "./h0d-launcher-macro.js";
 const MODULE_ID="h0d-machine-health-manager";
 const TITLE="H0D Machine Health Manager";
-const VERSION="0.3.3";
+const VERSION="0.3.4";
 const MACRO_NAME="H0D — État machine";
 const MACRO_COMMAND=`if (!game.h0dMachineHealth?.open) {
   ui.notifications.error("H0D Machine Health Manager : module non chargé ou API indisponible.");
@@ -589,12 +590,15 @@ async function diagnostic(){
   console.log(`${MODULE_ID} | diagnostic`,data); notice("info",`Diagnostic v${VERSION} envoyé dans la console (F12).`); return data;
 }
 
-async function ensureMacro(){
-  if(!game.user?.isGM)return; let m=game.macros?.getName(MACRO_NAME);
-  if(m){ const updates={}; if(m.command!==MACRO_COMMAND)updates.command=MACRO_COMMAND;if(m.type!=="script")updates.type="script";if(m.scope!=="global")updates.scope="global";if(Object.keys(updates).length)await m.update(updates);return m; }
-  m=await Macro.create({name:MACRO_NAME,type:"script",scope:"global",command:MACRO_COMMAND,img:"icons/svg/repair.svg"}); notice("info",`Macro « ${MACRO_NAME} » créée.`); return m;
+async function ensureMacro() {
+  return ensureManagedLauncherMacro({
+    moduleId:MODULE_ID,
+    name:MACRO_NAME,
+    command:MACRO_COMMAND,
+    img:"icons/svg/repair.svg",
+    notify:notice
+  });
 }
-
 
 const externalPieceSync=new Map();
 

@@ -2,6 +2,7 @@ name: Build and publish Foundry module
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: write
@@ -13,8 +14,11 @@ jobs:
       - name: Validate JavaScript and manifest
         run: |
           node --check scripts/h0d-machine-health-manager.js
+          node --check scripts/h0d-launcher-macro.js
+          node tests/launcher-macro.test.mjs
           python3 -m json.tool module.json > /dev/null
       - name: Package and publish release
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

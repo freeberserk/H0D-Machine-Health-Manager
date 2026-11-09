@@ -2,7 +2,7 @@
   "id": "h0d-machine-health-manager",
   "title": "H0D Machine Health Manager",
   "description": "Console d’Intégrité H0D : dégâts, PV, états de pièces, synchronisation et affichage DialogV2 corrigé.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "authors": [
     {
       "name": "freeberserk"
